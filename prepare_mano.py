@@ -2,6 +2,7 @@ from config import *
 from kinematics import *
 import numpy as np
 from utils import *
+import pickle
 
 
 def prepare_mano():
@@ -9,7 +10,7 @@ def prepare_mano():
   Use this function to convert a mano model (from MANO-Hand Project) to the hand
   model we want to use in the project.
   """
-  with open(OFFICIAL_MANO_PATH, 'rb') as f:
+  with open("D:/Download/mano_v1_2/models/MANO_RIGHT.pkl", 'rb') as f:
     data = pickle.load(f, encoding='latin1')
 
   output = {}
@@ -34,7 +35,7 @@ def prepare_mano():
       tar_idx = MANOHandJoints.labels.index(j + str(k))
       weights[tar_idx] = raw_weights[:, src_idx]
   output['weights'] = np.expand_dims(np.stack(weights, -1), -1)
-  with open(HAND_MESH_MODEL_PATH, 'wb') as f:
+  with open("model/hand_mesh/hand_right_mesh_model.pkl", 'wb') as f:
     pickle.dump(output, f)
 
 

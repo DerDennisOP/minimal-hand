@@ -45,7 +45,7 @@ class ModelDet:
         )[0]
 
         self.uv = self.uv[0]
-      tf.train.Saver().restore(self.sess, model_path)
+        tf.train.Saver().restore(self.sess, model_path)
 
   def process(self, img):
     """

@@ -29,9 +29,10 @@ def live_application(capture):
   """
   ############ output visualization ############
   view_mat = axangle2mat([1, 0, 0], np.pi) # align different coordinate systems
-  window_size = 1080
+  window_size_w = 640
+  window_size_h = 480
 
-  hand_mesh = HandMesh(config.HAND_MESH_MODEL_PATH)
+  hand_mesh = HandMesh(config.HAND_MESH_MODEL_PATH) 
   mesh = o3d.geometry.TriangleMesh()
   mesh.triangles = o3d.utility.Vector3iVector(hand_mesh.faces)
   mesh.vertices = \
@@ -40,7 +41,7 @@ def live_application(capture):
 
   viewer = o3d.visualization.Visualizer()
   viewer.create_window(
-    width=window_size + 1, height=window_size + 1,
+    width=window_size_w + 1, height=window_size_h + 1,
     window_name='Minimal Hand - output'
   )
   viewer.add_geometry(mesh)
@@ -51,8 +52,8 @@ def live_application(capture):
   extrinsic[0:3, 3] = 0
   cam_params.extrinsic = extrinsic
   cam_params.intrinsic.set_intrinsics(
-    window_size + 1, window_size + 1, config.CAM_FX, config.CAM_FY,
-    window_size // 2, window_size // 2
+    window_size_w + 1, window_size_h + 1, config.CAM_FX, config.CAM_FY,
+    window_size_w // 2, window_size_h // 2
   )
   view_control.convert_from_pinhole_camera_parameters(cam_params)
   view_control.set_constant_z_far(1000)
@@ -62,9 +63,9 @@ def live_application(capture):
   viewer.update_renderer()
 
   ############ input visualization ############
-  pygame.init()
-  display = pygame.display.set_mode((window_size, window_size))
-  pygame.display.set_caption('Minimal Hand - input')
+  # pygame.init()
+  # display = pygame.display.set_mode((window_size_w, window_size_h))
+  # pygame.display.set_caption('Minimal Hand - input')
 
   ############ misc ############
   mesh_smoother = OneEuroFilter(4.0, 0.0)
@@ -82,15 +83,17 @@ def live_application(capture):
       margin = int((frame_large.shape[1] - frame_large.shape[0]) / 2)
       frame_large = frame_large[:, margin:-margin]
 
-    frame_large = np.flip(frame_large, axis=1).copy()
+    if config.left is False:
+      frame_large = np.flip(frame_large, axis=1).copy()
     frame = imresize(frame_large, (128, 128))
 
-    _, theta_mpii = model.process(frame)
+    cords, theta_mpii = model.process(frame)
     theta_mano = mpii_to_mano(theta_mpii)
 
     v = hand_mesh.set_abs_quat(theta_mano)
-    v *= 2 # for better visualization
+    # v *= 2 # for better visualization
     v = v * 1000 + np.array([0, 0, 400])
+    # v = np.array([x+cords[0] for x in v])
     v = mesh_smoother.process(v)
     mesh.triangles = o3d.utility.Vector3iVector(hand_mesh.faces)
     mesh.vertices = o3d.utility.Vector3dVector(np.matmul(view_mat, v.T).T)
@@ -102,19 +105,34 @@ def live_application(capture):
 
     viewer.poll_events()
 
-    display.blit(
-      pygame.surfarray.make_surface(
-        np.transpose(
-          imresize(frame_large, (window_size, window_size)
-        ), (1, 0, 2))
-      ),
-      (0, 0)
-    )
-    pygame.display.update()
+    cords = cords * 150 + 200
+    cords = np.delete(cords, 2, 1)
 
-    if keyboard.is_pressed("esc"):
+    # v = v * 1.5 + 200
+    # v = np.delete(v, 2, 1)
+
+    frame_large = cv2.cvtColor(frame_large, cv2.COLOR_RGB2BGR)
+    # cv2.polylines(frame_large, v, False, (0, 0, 0))
+    for x in cords:
+      cv2.drawMarker(frame_large, (int(x[0]), int(x[1])), (0, 0, 0))
+      # cv2.line(frame_large, (int(v[x][0]), int(v[x][1])), (int(v[x+1][0]), int(v[x+1][1])), (0, 0, 0))
+
+    # meshindices = np.array(mesh.triangles)
+    # meshvertices = np.array(mesh.vertices) - 80
+
+    # pts2d = cv2.projectPoints(meshvertices, (0, 0, 0), (0, 0, 0), np.array([[620.744, 0., 0.], [0., 621.151, 0.], [0., 0., 1.]]), None)[0].astype(int)
+    # for face in meshindices:
+    #   cv2.fillConvexPoly(frame_large, pts2d[face], (64, 64, 192))
+    # cv2.polylines(frame_large, pts2d[meshindices], True, (255, 255, 255))
+
+    # cv2.polylines(frame_large, v, False, (0, 0, 0))
+    cv2.imshow("Hand AI", frame_large)
+
+    if keyboard.is_pressed("q"):
+      cv2.destroyAllWindows()
       break
 
+    cv2.waitKey(1)
     clock.tick(30)
 
 
