@@ -31,14 +31,14 @@ class MANOHandJoints:
 class MPIIHandJoints:
     n_joints = 21
 
-    labels = [
-        'W', #0
-        'T0', 'T1', 'T2', 'T3', #4
-        'I0', 'I1', 'I2', 'I3', #8
-        'M0', 'M1', 'M2', 'M3', #12
-        'R0', 'R1', 'R2', 'R3', #16
-        'L0', 'L1', 'L2', 'L3', #20
-    ]
+    # labels = [
+    #     'W', #0
+    #     'T0', 'T1', 'T2', 'T3', #4
+    #     'I0', 'I1', 'I2', 'I3', #8
+    #     'M0', 'M1', 'M2', 'M3', #12
+    #     'R0', 'R1', 'R2', 'R3', #16
+    #     'L0', 'L1', 'L2', 'L3', #20
+    # ]
 
     parents = [
         None,

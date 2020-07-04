@@ -27,7 +27,7 @@ def live_application(capture):
     capture : object
         An object from `capture.py` to read capture stream from.
     """
-    
+
     view_mat = axangle2mat([1, 0, 0], np.pi)
     window_size_w = 640
     window_size_h = 480
@@ -63,6 +63,7 @@ def live_application(capture):
     viewer.update_renderer()
 
     mesh_smoother = OneEuroFilter(4.0, 0.0)
+    cords_smoother = OneEuroFilter(4.0, 0.0)
     model = ModelPipeline()
 
     while True:
@@ -97,6 +98,8 @@ def live_application(capture):
         viewer.update_geometry()
 
         viewer.poll_events()
+
+        cords = cords_smoother.process(cords)
 
         cords = cords * 150 + 200
         cords = np.delete(cords, 2, 1)
